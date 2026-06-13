@@ -1,72 +1,164 @@
 -- ====================================================================
---         DEEP SEA FISHING HUB - CUSTOM GITHUB LOAD 🌊
+--         DEEP SEA FISHING HUB - ULTIMATE PREMIUM EDITION v3 🌊
 -- ====================================================================
 
--- 1. MEMUAT LINK KAVOLIB DAN SISTEMPANCING YANG TADI AKU KASIH
-local KavoUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua"))()
+-- 1. MEMUAT LOGIKA SISTEM PANCING SECARA ONLINE DARI GITHUB KAMU
 loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/SistemPancing.lua"))()
 
--- 2. INISIALISASI JENDELA UTAMA MENGGUNAKAN LIBRARY KAMU
-local JendelaUtama = KavoUi.CreateLib("DEEP SEA HUB : BLOX FRUIT")
-local TabPancing = JendelaUtama:NewTab("Otomatisasi")
-local SeksiUtama = TabPancing:NewSection("Kendali Utama Makro")
+-- 2. MEMUAT FRAMEWORK ORIGINAL PREMIUM UI LIBRARY
+local UiFramework = loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua"))()
 
--- 3. ELEMEN KONTROL (TOGGLE & DROPDOWN)
-SeksiUtama:NewToggle("Auto Fishing (UTAMA)", "Menyalakan seluruh rangkaian sistem makro pancing", function(state)
-    getgenv().AutoFishingState = state
-end)
+-- Inisialisasi Window Utama (Lengkap dengan Animasi Intro)
+local Window = UiFramework:MakeWindow({
+    Title = "DEEP SEA HUB : BLOX FRUIT",
+    SubTitle = "Premium Fishing Macro v3",
+    SaveFolder = "DeepSea_Config"
+})
 
-SeksiUtama:NewDropdown("Mode Tangkapan", "Metode penarikan", {"Perfect", "Instant"}, function(pilihan)
-    getgenv().FishingMode = pilihan
-end)
+-- 3. NOTIFIKASI POP-UP MODERN SAAT BERHASIL DIMUAT
+UiFramework:SetNotification({
+    Title = "Deep Sea Fishing Hub",
+    Description = "Premium UI v3 Berhasil Dimuat!",
+    Time = 5
+})
 
-SeksiUtama:NewDropdown("Target Prioritas", "Fokus objek", {"Chest", "Fish"}, function(pilihan)
-    getgenv().TargetType = pilihan
-end)
+-- 4. MEMBUAT TAB UTAMA (Otomatisasi & Fitur Ekonomi)
+local TabPancing = Window:MakeTab({
+    Name = "Otomatisasi",
+    Icon = "rbxassetid://10723351906" -- Ikon jangkar air premium
+})
 
-SeksiUtama:NewToggle("Auto Open Semua Jenis Peti", "Menghancurkan peti otomatis di tas", function(state)
-    getgenv().AutoOpenAllChests = state
-end)
+local TabEkonomi = Window:MakeTab({
+    Name = "Toko & Item",
+    Icon = "rbxassetid://10734950309" -- Ikon keranjang belanja modern
+})
 
-SeksiUtama:NewToggle("Anti-AFK Protection", "Mencegah terputusnya koneksi server 20 menit", function(state)
-    getgenv().AntiAfkEnabled = state
-end)
+-- ==========================================
+-- ISI TAB 1: OTOMATISASI PANCINGAN
+-- ==========================================
+TabPancing:AddSection({
+    Name = "Kendali Utama Makro"
+})
 
-SeksiUtama:NewToggle("FPS Booster (AFK Mode)", "Mematikan render game agar perangkat tetap dingin", function(state)
-    getgenv().FpsBoostEnabled = state
-end)
-
--- 4. KONTROL INTERFAZ MOBILE (TOMBOL MENU HP MODEL BULAT PREMIUM)
-local CoreGui = game:GetService("CoreGui")
-local TargetGui = CoreGui:WaitForChild("KavoDeepSeaHub", 5)
-
-if TargetGui then
-    local FramePanel = TargetGui:WaitForChild("MainFrame", 5)
-    
-    if FramePanel then
-        local TombolHp = Instance.new("TextButton")
-        TombolHp.Name = "MobileToggleButton"
-        TombolHp.Size = UDim2.new(0, 65, 0, 35)
-        TombolHp.Position = UDim2.new(0.05, 0, 0.15, 0)
-        TombolHp.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
-        TombolHp.Text = "MENU"
-        TombolHp.TextColor3 = Color3.fromRGB(255, 184, 0)
-        TombolHp.Font = Enum.Font.SourceSansBold
-        TombolHp.TextSize = 13
-        TombolHp.Active = true
-        TombolHp.Draggable = true
-        TombolHp.Parent = TargetGui
-
-        -- Menambahkan sudut melingkar modern biar tombol HP mirip Redz Hub asli
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 8)
-        UICorner.Parent = TombolHp
-
-        -- Mengaktifkan fungsi buka tutup menu utama
-        TombolHp.MouseButton1Click:Connect(function()
-            FramePanel.Visible = not FramePanel.Visible
-        end)
+-- Saklar Utama Pancingan
+TabPancing:AddToggle({
+    Name = "Auto Fishing (UTAMA)",
+    Description = "Menyalakan seluruh rangkaian sistem makro pancing",
+    Default = false,
+    Callback = function(state)
+        getgenv().AutoFishingState = state
     end
-end
+})
 
-print("[Main-Hub] GUI Berbasis getgenv() Berhasil Dimuat.")
+-- Dropdown Pilihan Metode Penarikan (Tangkapan)
+TabPancing:AddDropdown({
+    Name = "Mode Tangkapan",
+    Description = "Pilih metode penarikan pancingan",
+    Options = {"Perfect", "Instant"},
+    Default = "Perfect",
+    Callback = function(pilihan)
+        getgenv().FishingMode = pilihan
+    end
+})
+
+-- Dropdown Pilihan Prioritas Target
+TabPancing:AddDropdown({
+    Name = "Target Prioritas",
+    Description = "Fokus penarikan objek di dalam game",
+    Options = {"Chest", "Fish"},
+    Default = "Chest",
+    Callback = function(pilihan)
+        getgenv().TargetType = pilihan
+    end
+})
+
+TabPancing:AddSection({
+    Name = "Sistem Pendukung & AFK"
+})
+
+-- Saklar Otomatis Membuka Peti
+TabPancing:AddToggle({
+    Name = "Auto Open Semua Jenis Peti",
+    Description = "Menghancurkan peti otomatis dari dalam tas",
+    Default = true,
+    Callback = function(state)
+        getgenv().AutoOpenAllChests = state
+    end
+})
+
+-- Saklar Anti-AFK Roblox
+TabPancing:AddToggle({
+    Name = "Anti-AFK Protection",
+    Description = "Mencegah putus koneksi server (Error 203)",
+    Default = true,
+    Callback = function(state)
+        getgenv().AntiAfkEnabled = state
+    end
+})
+
+-- Saklar Pengoptimal Perangkat (FPS Booster)
+TabPancing:AddToggle({
+    Name = "FPS Booster (AFK Mode)",
+    Description = "Mematikan rendering game agar perangkat tetap dingin",
+    Default = false,
+    Callback = function(state)
+        getgenv().FpsBoostEnabled = state
+    end
+})
+
+
+-- ==========================================
+-- ISI TAB 2: TOKO & ITEM (FITUR TERLENGKAP)
+-- ==========================================
+TabEkonomi:AddSection({
+    Name = "Manajemen Umpan & Penjualan"
+})
+
+-- Saklar Otomatis Beli Umpan
+TabEkonomi:AddToggle({
+    Name = "Auto Buy Bait",
+    Description = "Otomatis membeli umpan di server saat jumlahnya habis (0)",
+    Default = true,
+    Callback = function(state)
+        getgenv().AutoBuyBaitEnabled = state
+    end
+})
+
+-- Dropdown Pilihan Semua Jenis Umpan Berdasarkan Lautan (First, Second, Third Sea)
+TabEkonomi:AddDropdown({
+    Name = "Pilih Jenis Umpan",
+    Description = "Tentukan jenis umpan yang dibeli otomatis sesuai lautan kamu",
+    Options = {
+        "Basic",
+        "Kelp Bait",
+        "Good Bait",
+        "Frozen Bait",
+        "Abyssal Bait",
+        "Carnivore Bait",
+        "Epic Bait"
+    },
+    Default = "Basic",
+    Callback = function(pilihan)
+        getgenv().SelectedBaitType = pilihan
+    end
+})
+
+-- Saklar Otomatis Jual Ikan
+TabEkonomi:AddToggle({
+    Name = "Auto Sell Fish",
+    Description = "Otomatis menjual seluruh hasil tangkapan saat tas penuh",
+    Default = true,
+    Callback = function(state)
+        getgenv().AutoSellEnabled = state
+    end
+})
+
+-- Saklar Teleport Zona Aman
+TabEkonomi:AddToggle({
+    Name = "Teleport Safe Zone",
+    Description = "Memindahkan karakter ke titik laut tersembunyi agar anti-report",
+    Default = true,
+    Callback = function(state)
+        getgenv().SafeZoneTeleport = state
+    end
+})
