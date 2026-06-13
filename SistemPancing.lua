@@ -1,6 +1,6 @@
--- ==========================================
--- BAGIAN 1: SETTING DEFAULT & SERVICES
--- ==========================================
+-- ====================================================================
+-- BAGIAN 1: PENGATURAN DEFAULT & SERVICES (Y-AXIS FIX)
+-- ====================================================================
 if not getgenv().SystemLoaded then
     getgenv().SystemLoaded = true
     getgenv().AutoFishingState = false
@@ -21,11 +21,9 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
--- ==========================================
--- BAGIAN 2: OPTIMIZATION & UTILITIES
--- ==========================================
-
--- Pengendali FPS Booster
+-- ====================================================================
+-- BAGIAN 2: OPTIMASI PERANGKAT & ANTI-REPORT
+-- ====================================================================
 task.spawn(function()
     RunService.RenderStepped:Connect(function()
         if getgenv().FpsBoostEnabled then
@@ -38,7 +36,6 @@ task.spawn(function()
     end)
 end)
 
--- Bypass Anti-AFK Kick Roblox
 task.spawn(function()
     LocalPlayer.Idled:Connect(function()
         if getgenv().AntiAfkEnabled then
@@ -48,7 +45,6 @@ task.spawn(function()
     end)
 end)
 
--- Teleport Pengaman (Anti-Report)
 local function secureLocation()
     local character = LocalPlayer.Character
     local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -59,62 +55,63 @@ local function secureLocation()
         end
     end
 end
--- ==========================================
--- BAGIAN 3: BAIT & MERCHANT ECONOMY
--- ==========================================
-
--- Otomatis Beli Umpan Saat Habis
+-- ====================================================================
+-- BAGIAN 3: SISTEM TRANSAKSI TOKO (AUTO BUY & SELL)
+-- ====================================================================
 local function periksaDanBeliUmpan()
     if not getgenv().AutoBuyBaitEnabled then return end
-    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
-    local dataFolder = LocalPlayer:FindFirstChild("Data") or LocalPlayer:FindFirstChild("PlayerData")
+    local dataFolder = LocalPlayer:FindFirstChild("Data") or LocalPlayer:FindFirstChild("PlayerData") or LocalPlayer:FindFirstChild("leaderstats")
     local baitAmount = 0
     
     if dataFolder and dataFolder:FindFirstChild("Bait") then
         baitAmount = dataFolder.Bait.Value
-    elseif leaderstats and leaderstats:FindFirstChild("Bait") then
-        baitAmount = leaderstats.Bait.Value
     else
         local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-        local mainGui = playerGui and (playerGui:FindFirstChild("Main") or playerGui:FindFirstChild("HUD"))
-        local baitLabel = mainGui and mainGui:FindFirstChild("BaitAmount", true)
+        local mainGui = playerGui and (playerGui:FindFirstChild("Main") or playerGui:FindFirstChild("HUD") or playerGui:FindFirstChild("FishingItemGui"))
+        local baitLabel = mainGui and mainGui:FindFirstChild("BaitAmount", true) or mainGui:FindFirstChild("Amount", true)
         if baitLabel and baitLabel:IsA("TextLabel") then
             baitAmount = tonumber(string.match(baitLabel.Text, "%d+")) or 0
         end
     end
     
     if baitAmount <= 0 then
-        local buyBaitRemote = ReplicatedStorage:FindFirstChild("BuyBait", true) 
-            or ReplicatedStorage:FindFirstChild("PurchaseBait", true) 
-            or ReplicatedStorage:FindFirstChild("BaitRemote", true)
+        local fishingRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
+            or ReplicatedStorage:FindFirstChild("FishingEvent", true) 
+            or ReplicatedStorage:FindFirstChild("FishingComm", true)
             
-        if buyBaitRemote and buyBaitRemote:IsA("RemoteEvent") then
-            buyBaitRemote:FireServer(getgenv().SelectedBaitType, 25)
-            task.wait(1)
-        elseif buyBaitRemote and buyBaitRemote:IsA("RemoteFunction") then
-            buyBaitRemote:InvokeServer(getgenv().SelectedBaitType, 25)
-            task.wait(1)
+        if fishingRemote and fishingRemote:IsA("RemoteEvent") then
+            fishingRemote:FireServer("BuyBait", getgenv().SelectedBaitType, 10)
+            task.wait(1.5)
         end
     end
 end
 
--- Otomatis Jual Ikan Saat Tas Penuh
 local function checkInventoryAndSell()
     if not getgenv().AutoSellEnabled then return end
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    local inventoryGui = playerGui and (playerGui:FindFirstChild("Inventory") or playerGui:FindFirstChild("BagGui"))
+    local inventoryGui = playerGui and (playerGui:FindFirstChild("Inventory") or playerGui:FindFirstChild("BagGui") or playerGui:FindFirstChild("FishingItemGui"))
+    local isFull = false
     
-    if inventoryGui and string.find(string.lower(tostring(inventoryGui)), "full") then
-        local sellRemote = ReplicatedStorage:FindFirstChild("SellFish", true) or ReplicatedStorage:FindFirstChild("MerchantRemote", true)
-        if sellRemote and sellRemote:IsA("RemoteEvent") then
-            sellRemote:FireServer("SellAll")
-            task.wait(1)
+    if inventoryGui and (string.find(string.lower(tostring(inventoryGui)), "full") or string.find(string.lower(tostring(inventoryGui)), "max")) then
+        isFull = true
+    end
+    
+    if isFull then
+        local fishingRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
+            or ReplicatedStorage:FindFirstChild("FishingEvent", true) 
+            or ReplicatedStorage:FindFirstChild("FishingComm", true)
+            
+        if fishingRemote and fishingRemote:IsA("RemoteEvent") then
+            fishingRemote:FireServer("SellFish")
+            task.wait(0.5)
+            fishingRemote:FireServer("SellAll")
+            task.wait(1.5)
         end
     end
 end
--- ==========================================
--- BAGIAN 4: ROD MANAGEMENT & BITE DETECTOR
--- ==========================================
+-- ====================================================================
+-- BAGIAN 4: MANAJEMEN ALAT PANCING & BITE DETECTOR
+-- ====================================================================
 local function kelolaAlatPancing()
     secureLocation() 
     local character = LocalPlayer.Character
@@ -162,7 +159,6 @@ local function kelolaAlatPancing()
     return rod
 end
 
--- Otomatis Hancurkan/Buka Peti di Tas
 local function prosesBukaSemuaPeti()
     local character = LocalPlayer.Character
     if not character or not getgenv().AutoOpenAllChests then return end
@@ -188,64 +184,82 @@ local function prosesBukaSemuaPeti()
         task.wait(1.5)
     end
 end
--- ==========================================
--- BAGIAN 5: CORE LOOP & PERFECT BYPASS ENGINE
--- ==========================================
+-- ====================================================================
+-- BAGIAN 5: CORE LOOP & VERTICAL LOCK (Y-AXIS ENGINE)
+-- ====================================================================
 task.spawn(function()
     while true do
-        task.wait(0.001)
+        task.wait(0.005) 
         if getgenv().AutoFishingState then
-            prosesBukaSemuaPeti()
-            local rod = kelolaAlatPancing()
-            if rod then
-                local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-                local fishingGui = playerGui and (playerGui:FindFirstChild("FishingGui") or playerGui:FindFirstChild("FishingGame"))
-                
-                if fishingGui and fishingGui.Enabled then
-                    if getgenv().FishingMode == "Perfect" then
-                        local zonaHijau = fishingGui:FindFirstChild("GreenZone") or fishingGui:FindFirstChild("BarGreen")
-                        local ikonIkan = fishingGui:FindFirstChild("FishBlue") or fishingGui:FindFirstChild("Fish")
-                        local ikonPeti = fishingGui:FindFirstChild("ChestYellow") or fishingGui:FindFirstChild("Chest") or fishingGui:FindFirstChild("SunkenChest")
-                        
-                        if zonaHijau then
-                            local objekTarget = ikonIkan
-                            if getgenv().TargetType == "Chest" and ikonPeti then
-                                objekTarget = ikonPeti
+            pcall(function()
+                prosesBukaSemuaPeti()
+                local rod = kelolaAlatPancing()
+                if rod then
+                    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local fishingGui = playerGui and (playerGui:FindFirstChild("FishingGui") or playerGui:FindFirstChild("FishingGame") or playerGui:FindFirstChild("FishingItemGui"))
+                    
+                    if fishingGui and fishingGui.Enabled then
+                        if getgenv().FishingMode == "Perfect" then
+                            local zonaHijau = nil
+                            for _, child in pairs(fishingGui:GetChildren()) do
+                                if child:IsA("Frame") and (string.find(string.lower(child.Name), "green") or string.find(string.lower(child.Name), "zone") or string.find(string.lower(child.Name), "bar")) then
+                                    zonaHijau = child; break
+                                end
+                            end
+                            if not zonaHijau then
+                                zonaHijau = fishingGui:FindFirstChild("GreenZone") or fishingGui:FindFirstChild("BarGreen")
                             end
                             
-                            if objekTarget and objekTarget.Visible then
-                                zonaHijau.Position = UDim2.new(objekTarget.Position.X.Scale, objekTarget.Position.X.Offset, zonaHijau.Position.Y.Scale, zonaHijau.Position.Y.Offset)
+                            local ikonIkan = fishingGui:FindFirstChild("FishBlue") or fishingGui:FindFirstChild("Fish") or fishingGui:FindFirstChild("FishIcon")
+                            local ikonPeti = fishingGui:FindFirstChild("ChestYellow") or fishingGui:FindFirstChild("Chest") or fishingGui:FindFirstChild("SunkenChest")
+                            
+                            if zonaHijau then
+                                local objekTarget = ikonIkan
+                                if getgenv().TargetType == "Chest" and ikonPeti then
+                                    objekTarget = ikonPeti
+                                end
+                                
+                                -- KUNCI POSISI VERTIKAL (NAIK-TURUN HP SUMBU Y)
+                                if objekTarget and objekTarget.Visible then
+                                    local targetPos = objekTarget.Position
+                                    zonaHijau.Position = UDim2.new(
+                                        zonaHijau.Position.X.Scale, 
+                                        zonaHijau.Position.X.Offset, 
+                                        targetPos.Y.Scale, 
+                                        targetPos.Y.Offset
+                                    )
+                                end
+                                
+                                local progressBar = fishingGui:FindFirstChild("ProgressBar") or fishingGui:FindFirstChild("Bar")
+                                local perfectLabel = fishingGui:FindFirstChild("PerfectLabel") or fishingGui:FindFirstChild("Perfect")
+                                
+                                if (progressBar and progressBar.Size.X.Scale >= 0.93) or (perfectLabel and perfectLabel.Visible == true) then
+                                    task.wait(0.05)
+                                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                                    task.wait(0.05)
+                                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                                    task.wait(1.5)
+                                end
                             end
-                            
-                            local progressBar = fishingGui:FindFirstChild("ProgressBar") or fishingGui:FindFirstChild("Bar")
-                            local perfectLabel = fishingGui:FindFirstChild("PerfectLabel") or fishingGui:FindFirstChild("Perfect")
-                            
-                            if (progressBar and progressBar.Size.X.Scale >= 0.93) or (perfectLabel and perfectLabel.Visible == true) then
-                                task.wait(0.05)
+                        elseif getgenv().FishingMode == "Instant" then
+                            if rod:GetAttribute("Bite") == true or fishingGui:GetAttribute("CanReel") == true then
                                 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
                                 task.wait(0.05)
                                 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                                task.wait(1.4)
+                                task.wait(1)
                             end
                         end
-                    elseif getgenv().FishingMode == "Instant" then
-                        if rod:GetAttribute("Bite") == true or fishingGui:GetAttribute("CanReel") == true then
-                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                            task.wait(0.05)
-                            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-                            task.wait(1)
-                        end
-                    end
-                else
-                    local catchNotification = playerGui:FindFirstChild("CatchNotification") or playerGui:FindFirstChild("AppraiseFrame") or playerGui:FindFirstChild("RewardGui")
-                    if catchNotification and (catchNotification.Enabled or (catchNotification:FindFirstChild("Frame") and catchNotification.Frame.Visible)) then
-                        for i = 1, 3 do
-                            VirtualInputManager:SendMouseButtonEvent(400, 400, 0, true, game, 1); task.wait(0.04)
-                            VirtualInputManager:SendMouseButtonEvent(400, 400, 0, false, game, 1); task.wait(0.08)
+                    else
+                        local catchNotification = playerGui:FindFirstChild("CatchNotification") or playerGui:FindFirstChild("AppraiseFrame") or playerGui:FindFirstChild("RewardGui")
+                        if catchNotification and (catchNotification.Enabled or (catchNotification:FindFirstChild("Frame") and catchNotification.Frame.Visible)) then
+                            for i = 1, 3 do
+                                VirtualInputManager:SendMouseButtonEvent(400, 400, 0, true, game, 1); task.wait(0.04)
+                                VirtualInputManager:SendMouseButtonEvent(400, 400, 0, false, game, 1); task.wait(0.08)
+                            end
                         end
                     end
                 end
-            end
+            end)
         end
     end
 end)
