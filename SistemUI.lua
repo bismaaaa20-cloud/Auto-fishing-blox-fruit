@@ -1,14 +1,17 @@
--- Memuat Library Kavo langsung dari link GitHub kamu
-local KavoUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua"))()
+-- ====================================================================
+--         DEEP SEA FISHING HUB - CUSTOM GITHUB LOAD 🌊
+-- ====================================================================
 
--- Memuat Logika Sistem Pancing langsung dari link GitHub kamu
+-- 1. MEMUAT LINK KAVOLIB DAN SISTEMPANCING YANG TADI AKU KASIH
+local KavoUi = loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua"))()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/SistemPancing.lua"))()
 
-local JendelaUtama = KavoUi.CreateLib("DEEP SEA FISHING HUB")
+-- 2. INISIALISASI JENDELA UTAMA MENGGUNAKAN LIBRARY KAMU
+local JendelaUtama = KavoUi.CreateLib("DEEP SEA HUB : BLOX FRUIT")
 local TabPancing = JendelaUtama:NewTab("Otomatisasi")
-local SeksiUtama = TabPancing:NewSection("Kendali Utama")
+local SeksiUtama = TabPancing:NewSection("Kendali Utama Makro")
 
--- Tombol Utama Mengontrol Jalannya getgenv()
+-- 3. ELEMEN KONTROL (TOGGLE & DROPDOWN)
 SeksiUtama:NewToggle("Auto Fishing (UTAMA)", "Menyalakan seluruh rangkaian sistem makro pancing", function(state)
     getgenv().AutoFishingState = state
 end)
@@ -33,27 +36,37 @@ SeksiUtama:NewToggle("FPS Booster (AFK Mode)", "Mematikan render game agar peran
     getgenv().FpsBoostEnabled = state
 end)
 
--- Tombol Melayang Khusus Buka/Tutup Menu di Layar HP
+-- 4. KONTROL INTERFAZ MOBILE (TOMBOL MENU HP MODEL BULAT PREMIUM)
 local CoreGui = game:GetService("CoreGui")
-local TargetGui = CoreGui:WaitForChild("KavoDeepSeaHub")
-local FramePanel = TargetGui:WaitForChild("MainFrame")
+local TargetGui = CoreGui:WaitForChild("KavoDeepSeaHub", 5)
 
-local TombolHp = Instance.new("TextButton")
-TombolHp.Name = "MobileToggleButton"
-TombolHp.Size = UDim2.new(0, 60, 0, 30)
-TombolHp.Position = UDim2.new(0.1, 0, 0.1, 0)
-TombolHp.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
-TombolHp.Text = "MENU"
-TombolHp.TextColor3 = Color3.fromRGB(255, 184, 0)
-TombolHp.Font = Enum.Font.SourceSansBold
-TombolHp.TextSize = 12
-TombolHp.Active = true
-TombolHp.Draggable = true
-TombolHp.Parent = TargetGui
+if TargetGui then
+    local FramePanel = TargetGui:WaitForChild("MainFrame", 5)
+    
+    if FramePanel then
+        local TombolHp = Instance.new("TextButton")
+        TombolHp.Name = "MobileToggleButton"
+        TombolHp.Size = UDim2.new(0, 65, 0, 35)
+        TombolHp.Position = UDim2.new(0.05, 0, 0.15, 0)
+        TombolHp.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
+        TombolHp.Text = "MENU"
+        TombolHp.TextColor3 = Color3.fromRGB(255, 184, 0)
+        TombolHp.Font = Enum.Font.SourceSansBold
+        TombolHp.TextSize = 13
+        TombolHp.Active = true
+        TombolHp.Draggable = true
+        TombolHp.Parent = TargetGui
 
--- Memperbaiki bug pemanggilan variabel MainFrame yang salah pada file ketiga bawaanmu
-TombolHp.MouseButton1Click:Connect(function()
-    FramePanel.Visible = not FramePanel.Visible
-end)
+        -- Menambahkan sudut melingkar modern biar tombol HP mirip Redz Hub asli
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 8)
+        UICorner.Parent = TombolHp
+
+        -- Mengaktifkan fungsi buka tutup menu utama
+        TombolHp.MouseButton1Click:Connect(function()
+            FramePanel.Visible = not FramePanel.Visible
+        end)
+    end
+end
 
 print("[Main-Hub] GUI Berbasis getgenv() Berhasil Dimuat.")
