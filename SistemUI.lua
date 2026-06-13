@@ -1,12 +1,9 @@
 -- ====================================================================
---         DEEP SEA FISHING HUB - VERSI KECEPATAN INSTAN v3 🌊
+--         DEEP SEA FISHING HUB - VERSI KECEPATAN INSTAN V3 (FIX) 🌊
 -- ====================================================================
 
--- Fungsi Utama untuk Menyimpan File ke Folder Lokal Perangkat (Bikin Loading Instan)
-local function muatSistemPancingLocal()
-    local namaFile = "SistemPancingLocal.lua"
-    local urlGitHub = "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/SistemPancing.lua"
-    
+-- Fungsi Bypass Penyimpanan Lokal (Mencegah Lag & Mempercepat Loading)
+local function muatFileInstan(namaFile, urlGitHub)
     if isfile(namaFile) then
         return loadstring(readfile(namaFile))()
     else
@@ -19,152 +16,135 @@ local function muatSistemPancingLocal()
     return loadstring(game:HttpGet(urlGitHub))()
 end
 
-local function muatKavoLibLocal()
-    local namaFile = "KavoLibLocal.lua"
-    local urlGitHub = "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua"
-    
-    if isfile(namaFile) then
-        return loadstring(readfile(namaFile))()
-    else
-        local sukses, isiFile = pcall(game.HttpGet, game, urlGitHub)
-        if sukses and isiFile then
-            writefile(namaFile, isiFile)
-            return loadstring(isiFile)()
-        end
-    end
-    return loadstring(game:HttpGet(urlGitHub))()
-end
-
--- 1. MEMUAT LOGIKA SISTEM PANCING SECARA INSTAN DI LATAR BELAKANG
+-- 1. MEMUAT SYSTEM LOGIKA PANCING DI LATAR BELAKANG VIA LINK GITHUB KAMU
 task.spawn(function()
     pcall(function()
-        muatSistemPancingLocal()
+        muatFileInstan("SistemPancingLocal.lua", "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/SistemPancing.lua")
     end)
 end)
 
--- 2. MEMUAT LIBRARY ANTARMUKA DARI GITHUB KAMU SENDIRI
-local UiFramework = muatKavoLibLocal()
+-- 2. MEMUAT FRAMEWORK ANTARMUKA ASLI DARI LINK GITHUB KAMU SENDIRI
+local KavoUi = muatFileInstan("KavoLibLocal.lua", "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua")
 
--- Inisialisasi Jendela Utama Menu Hub
-local Window = UiFramework:MakeWindow({
-    Title = "DEEP SEA HUB : BLOX FRUIT",
-    SubTitle = "Fishing Macro v3",
-    SaveFolder = "DeepSea_Config"
-})
+-- Inisialisasi Jendela Utama (Menggunakan Fungsi Asli Kavo: CreateLib)
+local JendelaUtama = KavoUi.CreateLib("DEEP SEA HUB : BLOX FRUIT")
 
--- Memunculkan Notifikasi Saat Berhasil Masuk Layar Game
-UiFramework:SetNotification({
-    Title = "Deep Sea Fishing Hub",
-    Description = "UI Berhasil Dimuat!",
-    Time = 2
-})
+-- 3. PEMBUATAN HALAMAN TAB MENU (Menghindari Bug Crash Fungsi)
+local TabPancing = JendelaUtama:NewTab("Otomatisasi")
+local SeksiUtama = TabPancing:NewSection("Kendali Utama Makro")
+local SeksiPendukung = TabPancing:NewSection("Sistem Pendukung & AFK")
 
--- 3. MEMBUAT HALAMAN TAB MENU UTAMA
-local TabPancing = Window:MakeTab({
-    Name = "Otomatisasi",
-    Icon = "rbxassetid://10723351906" -- Ikon jangkar air
-})
-
-local TabEkonomi = Window:MakeTab({
-    Name = "Toko & Item",
-    Icon = "rbxassetid://10734950309" -- Ikon keranjang belanja
-})
+local TabEkonomi = JendelaUtama:NewTab("Toko & Item")
+local SeksiEkonomi = TabEkonomi:NewSection("Manajemen Umpan & Penjualan")
 
 -- ==========================================
--- HALAMAN TAB 1: OTOMATISASI PANCINGAN
+-- ISI SEKSI 1: UTAMA (MENGGUNAKAN ELEMEN KAVO)
 -- ==========================================
-TabPancing:AddSection({ Name = "Kendali Utama Makro" })
 
--- Saklar Utama Jalannya Sistem
-TabPancing:AddToggle({
-    Name = "Auto Fishing (UTAMA)",
-    Description = "Menyalakan seluruh rangkaian sistem makro pancing",
-    Default = false,
-    Callback = function(state) getgenv().AutoFishingState = state end
-})
+-- Saklar Utama Jalannya Makro
+SeksiUtama:NewToggle("Auto Fishing (UTAMA)", "Menyalakan seluruh rangkaian sistem makro pancing", function(state)
+    getgenv().AutoFishingState = state
+end)
 
--- Dropdown Pilihan Kecepatan Tangkapan
-TabPancing:AddDropdown({
-    Name = "Mode Tangkapan",
-    Description = "Pilih metode penarikan pancingan",
-    Options = {"Perfect", "Instant"},
-    Default = "Perfect",
-    Callback = function(pilihan) getgenv().FishingMode = pilihan end
-})
+-- Pilihan Kecepatan Tarikan Senar
+SeksiUtama:NewDropdown("Mode Tangkapan", "Pilih metode penarikan pancingan", {"Perfect", "Instant"}, function(pilihan)
+    getgenv().FishingMode = pilihan
+end)
 
--- Dropdown Pilihan Fokus Objek
-TabPancing:AddDropdown({
-    Name = "Target Prioritas",
-    Description = "Fokus penarikan objek di dalam game",
-    Options = {"Chest", "Fish"},
-    Default = "Chest",
-    Callback = function(pilihan) getgenv().TargetType = pilihan end
-})
-
-TabPancing:AddSection({ Name = "Sistem Pendukung & AFK" })
-
--- Saklar Otomatis Buka Box/Chest
-TabPancing:AddToggle({
-    Name = "Auto Open Semua Jenis Peti",
-    Description = "Menghancurkan peti otomatis dari dalam tas",
-    Default = true,
-    Callback = function(state) getgenv().AutoOpenAllChests = state end
-})
-
--- Saklar Anti Deteksi Diam 20 Menit Roblox
-TabPancing:AddToggle({
-    Name = "Anti-AFK Protection",
-    Description = "Mencegah putus koneksi server (Error 203)",
-    Default = true,
-    Callback = function(state) getgenv().AntiAfkEnabled = state end
-})
-
--- Saklar Penghemat Baterai/Suhu HP (FPS Booster)
-TabPancing:AddToggle({
-    Name = "FPS Booster (AFK Mode)",
-    Description = "Mematikan rendering game agar perangkat tetap dingin",
-    Default = false,
-    Callback = function(state) getgenv().FpsBoostEnabled = state end
-})
+-- Pilihan Prioritas Target Tangkapan
+SeksiUtama:NewDropdown("Target Prioritas", "Fokus penarikan objek di dalam game", {"Chest", "Fish"}, function(pilihan)
+    getgenv().TargetType = pilihan
+end)
 
 -- ==========================================
--- HALAMAN TAB 2: TOKO & ITEM
+-- ISI SEKSI 2: AFK & PENDUKUNG
 -- ==========================================
-TabEkonomi:AddSection({ Name = "Manajemen Umpan & Penjualan" })
+
+-- Saklar Otomatis Hancurkan/Buka Box
+SeksiPendukung:NewToggle("Auto Open Semua Jenis Peti", "Menghancurkan peti otomatis dari dalam tas", function(state)
+    getgenv().AutoOpenAllChests = state
+end)
+
+-- Saklar Anti Deteksi Diam Roblox
+SeksiPendukung:NewToggle("Anti-AFK Protection", "Mencegah putus koneksi server (Error 203)", function(state)
+    getgenv().AntiAfkEnabled = state
+end)
+
+-- Saklar Penghemat Suhu Perangkat (Baterai HP)
+SeksiPendukung:NewToggle("FPS Booster (AFK Mode)", "Mematikan rendering game agar perangkat tetap dingin", function(state)
+    getgenv().FpsBoostEnabled = state
+end)
+
+-- ==========================================
+-- ISI SEKSI 3: TOKO & ITEM (AUTO BUY BAIT)
+-- ==========================================
 
 -- Saklar Otomatis Membeli Umpan Baru
-TabEkonomi:AddToggle({
-    Name = "Auto Buy Bait",
-    Description = "Otomatis membeli umpan di server saat jumlahnya habis (0)",
-    Default = true,
-    Callback = function(state) getgenv().AutoBuyBaitEnabled = state end
-})
+SeksiEkonomi:NewToggle("Auto Buy Bait", "Otomatis membeli umpan di server saat jumlahnya habis (0)", function(state)
+    getgenv().AutoBuyBaitEnabled = state
+end)
 
--- Dropdown Pilihan Jenis Umpan Berdasarkan Lautan (First, Second, Third Sea)
-TabEkonomi:AddDropdown({
-    Name = "Pilih Jenis Umpan",
-    Description = "Tentukan jenis umpan yang dibeli otomatis sesuai lautan kamu",
-    Options = {
-        "Basic", "Kelp Bait", "Good Bait",
-        "Frozen Bait", "Abyssal Bait",
-        "Carnivore Bait", "Epic Bait"
-    },
-    Default = "Basic",
-    Callback = function(pilihan) getgenv().SelectedBaitType = pilihan end
-})
+-- Pilihan Jenis Umpan Semua Lautan (First, Second, Third Sea)
+SeksiEkonomi:NewDropdown("Pilih Jenis Umpan", "Tentukan jenis umpan yang dibeli otomatis sesuai lautan kamu", {
+    "Basic", "Kelp Bait", "Good Bait", "Frozen Bait", "Abyssal Bait", "Carnivore Bait", "Epic Bait"
+}, function(pilihan)
+    getgenv().SelectedBaitType = pilihan
+end)
 
--- Saklar Otomatis Menjual Ikan ke NPC Merchant
-TabEkonomi:AddToggle({
-    Name = "Auto Sell Fish",
-    Description = "Otomatis menjual seluruh hasil tangkapan saat tas penuh",
-    Default = true,
-    Callback = function(state) getgenv().AutoSellEnabled = state end
-})
+-- Saklar Otomatis Jual Hasil Pancing ke NPC
+SeksiEkonomi:NewToggle("Auto Sell Fish", "Otomatis menjual seluruh hasil tangkapan saat tas penuh", function(state)
+    getgenv().AutoSellEnabled = state
+end)
 
--- Saklar Sembunyi Tempat Memancing Terisolasi
-TabEkonomi:AddToggle({
-    Name = "Teleport Safe Zone",
-    Description = "Memindahkan karakter ke titik laut tersembunyi agar anti-report",
-    Default = true,
-    Callback = function(state) getgenv().SafeZoneTeleport = state end
-})
+-- Saklar Sembunyi Koordinat Laut Terisolasi
+SeksiEkonomi:NewToggle("Teleport Safe Zone", "Memindahkan karakter ke titik laut tersembunyi agar anti-report", function(state)
+    getgenv().SafeZoneTeleport = state
+end)
+
+-- ==========================================
+-- 4. FIX TOMBOL HP: MANIPULASI CORE GUI LANGSUNG
+-- ==========================================
+local CoreGui = game:GetService("CoreGui")
+
+task.spawn(function()
+    task.wait(1.5) -- Menunggu seluruh elemen dasar KavoLib selesai terpasang sempurna
+    
+    local TargetGui = CoreGui:FindFirstChild("KavoDeepSeaHub")
+    if TargetGui then
+        local FramePanel = TargetGui:FindFirstChild("MainFrame")
+        
+        if FramePanel then
+            -- Pembuatan tombol melayang bulat minimalis agar mudah digunakan di HP
+            local TombolHp = Instance.new("TextButton")
+            TombolHp.Name = "MobileToggleBtn"
+            TombolHp.Size = UDim2.new(0, 60, 0, 35)
+            TombolHp.Position = UDim2.new(0, 15, 0, 130) -- Letak kiri layar agar tidak menutupi tombol serang bawaan game
+            TombolHp.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
+            TombolHp.Text = "MENU"
+            TombolHp.TextColor3 = Color3.fromRGB(255, 184, 0)
+            TombolHp.Font = Enum.Font.SourceSansBold
+            TombolHp.TextSize = 12
+            TombolHp.Active = true
+            TombolHp.Draggable = true -- Pengguna HP bebas menggeser letak tombol ini sesuka hati
+            TombolHp.Parent = TargetGui
+
+            -- Desain Sudut Melengkung Halus
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, 8)
+            Corner.Parent = TombolHp
+            
+            -- Desain Garis Batas Menyala Kuning Emas
+            local UIStroke = Instance.new("UIStroke")
+            UIStroke.Color = Color3.fromRGB(255, 184, 0)
+            UIStroke.Thickness = 1.2
+            UIStroke.Parent = TombolHp
+
+            -- Sistem Buka Tutup Panel Utama Lewat Ketukan Tombol HP
+            TombolHp.MouseButton1Click:Connect(function()
+                FramePanel.Visible = not FramePanel.Visible
+            end)
+        end
+    end
+end)
+
+print("[Main-Hub] GUI Berbasis getgenv() Berhasil Dimuat.")
