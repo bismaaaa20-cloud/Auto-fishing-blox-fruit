@@ -1,5 +1,5 @@
 -- ====================================================================
--- BAGIAN 1: PENGATURAN DEFAULT & SERVICES (Y-AXIS FIX)
+-- BAGIAN 1: PENGATURAN DEFAULT & SERVICES (ULTIMATE SEA 3 FIX)
 -- ====================================================================
 if not getgenv().SystemLoaded then
     getgenv().SystemLoaded = true
@@ -22,7 +22,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- ====================================================================
--- BAGIAN 2: OPTIMASI PERANGKAT & ANTI-REPORT
+-- BAGIAN 2: OPTIMASI PERANGKAT & TELEPORT ZONA AMAN TIKI OUTPOST
 -- ====================================================================
 task.spawn(function()
     RunService.RenderStepped:Connect(function()
@@ -46,17 +46,31 @@ task.spawn(function()
 end)
 
 local function secureLocation()
+    if not getgenv().SafeZoneTeleport then return end
     local character = LocalPlayer.Character
     local hrp = character and character:FindFirstChild("HumanoidRootPart")
-    if hrp and getgenv().SafeZoneTeleport then
-        if (hrp.Position - Vector3.new(0, 0, 0)).Magnitude < 150 then
-            hrp.CFrame = CFrame.new(1420, -12, -3250)
-            task.wait(0.5)
+    
+    if hrp then
+        -- Deteksi jika player berada di Sea 3 (Tiki Outpost)
+        if game.PlaceId == 15442541334 or game:GetService("Workspace"):FindFirstChild("Sea3") or string.find(string.lower(game:GetService("Workspace").CurrentCamera.Name), "sea3") then
+            -- Koordinat batu karang rahasia di ujung lautan Sea 3 yang aman dari jangkar radar player lain
+            local Sea3SafeZone = Vector3.new(-4800, -12, -8200)
+            if (hrp.Position - Sea3SafeZone).Magnitude > 200 then
+                hrp.CFrame = CFrame.new(Sea3SafeZone)
+                task.wait(0.8)
+            end
+        else
+            -- Koordinat Zona Aman Cadangan untuk Sea 1 dan Sea 2
+            local ClassicSafeZone = Vector3.new(1420, -12, -3250)
+            if (hrp.Position - ClassicSafeZone).Magnitude > 200 then
+                hrp.CFrame = CFrame.new(ClassicSafeZone)
+                task.wait(0.8)
+            end
         end
     end
 end
 -- ====================================================================
--- BAGIAN 3: SISTEM TRANSAKSI TOKO (AUTO BUY & SELL)
+-- BAGIAN 3: SISTEM TRANSAKSI TOKO (FIXED AUTO BUY & SELL BLOX FRUIT)
 -- ====================================================================
 local function periksaDanBeliUmpan()
     if not getgenv().AutoBuyBaitEnabled then return end
@@ -68,19 +82,24 @@ local function periksaDanBeliUmpan()
     else
         local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
         local mainGui = playerGui and (playerGui:FindFirstChild("Main") or playerGui:FindFirstChild("HUD") or playerGui:FindFirstChild("FishingItemGui"))
-        local baitLabel = mainGui and mainGui:FindFirstChild("BaitAmount", true) or mainGui:FindFirstChild("Amount", true)
+        local baitLabel = mainGui and (mainGui:FindFirstChild("BaitAmount", true) or mainGui:FindFirstChild("Amount", true))
         if baitLabel and baitLabel:IsA("TextLabel") then
             baitAmount = tonumber(string.match(baitLabel.Text, "%d+")) or 0
         end
     end
     
     if baitAmount <= 0 then
-        local fishingRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
+        local baitFormat = getgenv().SelectedBaitType or "Basic"
+        if not string.find(string.lower(baitFormat), "bait") and baitFormat ~= "Basic" then
+            baitFormat = baitFormat .. " Bait"
+        end
+
+        local mainRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
             or ReplicatedStorage:FindFirstChild("FishingEvent", true) 
-            or ReplicatedStorage:FindFirstChild("FishingComm", true)
+            or ReplicatedStorage:FindFirstChild("MainRemote", true)
             
-        if fishingRemote and fishingRemote:IsA("RemoteEvent") then
-            fishingRemote:FireServer("BuyBait", getgenv().SelectedBaitType, 10)
+        if mainRemote and mainRemote:IsA("RemoteEvent") then
+            mainRemote:FireServer("BuyBait", baitFormat, 10)
             task.wait(1.5)
         end
     end
@@ -89,28 +108,31 @@ end
 local function checkInventoryAndSell()
     if not getgenv().AutoSellEnabled then return end
     local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-    local inventoryGui = playerGui and (playerGui:FindFirstChild("Inventory") or playerGui:FindFirstChild("BagGui") or playerGui:FindFirstChild("FishingItemGui"))
     local isFull = false
     
-    if inventoryGui and (string.find(string.lower(tostring(inventoryGui)), "full") or string.find(string.lower(tostring(inventoryGui)), "max")) then
-        isFull = true
+    local inventoryGui = playerGui and (playerGui:FindFirstChild("Inventory") or playerGui:FindFirstChild("BagGui") or playerGui:FindFirstChild("FishingItemGui"))
+    if inventoryGui then
+        local teksGui = string.lower(tostring(inventoryGui))
+        if string.find(teksGui, "full") or string.find(teksGui, "max") or string.find(teksGui, "100%") then
+            isFull = true
+        end
     end
     
     if isFull then
-        local fishingRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
+        local mainRemote = ReplicatedStorage:FindFirstChild("FishingRemote", true) 
             or ReplicatedStorage:FindFirstChild("FishingEvent", true) 
-            or ReplicatedStorage:FindFirstChild("FishingComm", true)
+            or ReplicatedStorage:FindFirstChild("MainRemote", true)
             
-        if fishingRemote and fishingRemote:IsA("RemoteEvent") then
-            fishingRemote:FireServer("SellFish")
-            task.wait(0.5)
-            fishingRemote:FireServer("SellAll")
+        if mainRemote and mainRemote:IsA("RemoteEvent") then
+            mainRemote:FireServer("SellFish", "All")
+            task.wait(0.3)
+            mainRemote:FireServer("SellAll")
             task.wait(1.5)
         end
     end
 end
 -- ====================================================================
--- BAGIAN 4: MANAJEMEN ALAT PANCING & BITE DETECTOR
+-- BAGIAN 4: MANAJEMEN ALAT PANCING & UNIVERSAL BITE CLICK
 -- ====================================================================
 local function kelolaAlatPancing()
     secureLocation() 
@@ -145,16 +167,21 @@ local function kelolaAlatPancing()
         local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
         while getgenv().AutoFishingState and (rod:GetAttribute("Cast") == true or rod:FindFirstChild("Bobber")) do
             local biteGui = playerGui:FindFirstChild("BiteGui") or playerGui:FindFirstChild("FishingGui") or playerGui:FindFirstChild("NotificationGui")
+            local fishingGui = playerGui:FindFirstChild("FishingGui") or playerGui:FindFirstChild("FishingGame") or playerGui:FindFirstChild("FishingItemGui")
+            
+            if fishingGui and fishingGui.Enabled then
+                break
+            end
+            
             if rod:GetAttribute("Bite") == true or (biteGui and (biteGui:GetAttribute("CanReel") == true or biteGui.Enabled == true)) then
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                task.wait(0.05)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                task.wait(0.5)
                 break
             end
             task.wait(0.05)
         end
-        
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-        task.wait(0.05)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        task.wait(0.6)
     end
     return rod
 end
@@ -185,7 +212,7 @@ local function prosesBukaSemuaPeti()
     end
 end
 -- ====================================================================
--- BAGIAN 5: CORE LOOP & VERTICAL LOCK (Y-AXIS ENGINE)
+-- BAGIAN 5: CORE LOOP & FIXED ABSOLUTE Y-AXIS (ANTI-CRASH LOGIC)
 -- ====================================================================
 task.spawn(function()
     while true do
@@ -219,15 +246,23 @@ task.spawn(function()
                                     objekTarget = ikonPeti
                                 end
                                 
-                                -- KUNCI POSISI VERTIKAL (NAIK-TURUN HP SUMBU Y)
+                                -- PERBAIKAN POSISI VERTIKAL MENGGUNAKAN RELATIF CANVAS SINKRONISASI LAYAR HP
                                 if objekTarget and objekTarget.Visible then
-                                    local targetPos = objekTarget.Position
-                                    zonaHijau.Position = UDim2.new(
-                                        zonaHijau.Position.X.Scale, 
-                                        zonaHijau.Position.X.Offset, 
-                                        targetPos.Y.Scale, 
-                                        targetPos.Y.Offset
-                                    )
+                                    local parentFrame = fishingGui:FindFirstChild("Bar") or fishingGui:FindFirstChild("Background") or zonaHijau.Parent
+                                    if parentFrame then
+                                        local tinggiMaksimal = parentFrame.AbsoluteSize.Y
+                                        if tinggiMaksimal > 0 then
+                                            local posisiIkanAbsolut = objekTarget.AbsolutePosition.Y - parentFrame.AbsolutePosition.Y
+                                            local rasioY = posisiIkanAbsolut / tinggiMaksimal
+                                            
+                                            zonaHijau.Position = UDim2.new(
+                                                zonaHijau.Position.X.Scale, 
+                                                zonaHijau.Position.X.Offset, 
+                                                rasioY, 
+                                                0
+                                            )
+                                        end
+                                    end
                                 end
                                 
                                 local progressBar = fishingGui:FindFirstChild("ProgressBar") or fishingGui:FindFirstChild("Bar")
