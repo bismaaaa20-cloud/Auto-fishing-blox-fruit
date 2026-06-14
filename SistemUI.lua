@@ -1,15 +1,14 @@
 -- ====================================================================
--- BAGIAN 1: INISIALISASI PUSTAKA GUI & VARIABEL UTAMA
+-- BAGIAN 1: INISIALISASI INTERNAL (TANPA LINK INTERNET - ANTI DNS ERROR)
 -- ====================================================================
 
-_G.OrionLib = loadstring(game:HttpGet(('https://githubusercontent.com')))()
 _G.VirtualInputManager = game:GetService("VirtualInputManager")
 _G.UserInputService = game:GetService("UserInputService")
 _G.Players = game:GetService("Players")
 _G.LocalPlayer = _G.Players.LocalPlayer
 _G.PlayerGui = _G.LocalPlayer:WaitForChild("PlayerGui")
 
--- Sinkronisasi Awal Parameter Makro
+-- Sinkronisasi Parameter Makro
 _G.StartAutofish = false
 _G.SelectedBait = "Basic Bait"
 _G.SelectedRod = "Fishing Rod"
@@ -17,7 +16,7 @@ _G.CastDelay = 1.5
 _G.ReelDelay = 0.4
 _G.AutoBuyBait = false
 
-print("[BAGIAN 1 Selesai] Variabel dan pustaka berhasil disiapkan!")
+print("[BAGIAN 1 Sukses] Sistem internal siap tanpa koneksi luar!")
 -- ====================================================================
 -- BAGIAN 2: MEMBUAT KOTAK OVERLAY INTERAKTIF (MOBILE DRAG & RESIZE)
 -- ====================================================================
@@ -103,56 +102,106 @@ _G.KotakMerah = _G.OverlayGui:FindFirstChild("Fish Area (Red)")
 
 print("[BAGIAN 2 Selesai] Kotak visual Hijau & Merah berhasil muncul di layar!")
 -- ====================================================================
--- BAGIAN 3: MEMBUAT WINDOW PANEL MENU (TAMPILAN ARAPBOT REPLIKA)
+-- BAGIAN 3: PANEL MENU INTERNAL MOBILE (ANTI-LAG & ANTI-EROR)
 -- ====================================================================
 
-local Window = _G.OrionLib:MakeWindow({Name = "ArapBot Mobile Remake (Pro v8)", HidePremium = true, SaveConfig = false, IntroText = "Memuat Fitur Makro..."})
+if _G.PlayerGui:FindFirstChild("ArapBotMenuMobile") then
+    _G.PlayerGui.ArapBotMenuMobile:Destroy()
+end
 
-local ControlsTab = Window:MakeTab({Name = "Controls", Icon = "rbxassetid://4483362458", PremiumOnly = false})
+local MainGui = Instance.new("ScreenGui")
+MainGui.Name = "ArapBotMenuMobile"
+MainGui.ResetOnSpawn = false
+MainGui.Parent = _G.PlayerGui
 
-ControlsTab:AddToggle({
-	Name = "Start Autofish", Default = false,
-	Callback = function(Value) _G.StartAutofish = Value end    
-})
+-- Frame Utama Panel Menu
+local MenuFrame = Instance.new("Frame")
+MenuFrame.Size = UDim2.new(0, 220, 0, 260)
+MenuFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
+MenuFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MenuFrame.BorderSizePixel = 2
+MenuFrame.BorderColor3 = Color3.fromRGB(0, 255, 0)
+MenuFrame.Active = true
+MenuFrame.Draggable = true -- Bisa digeser di layar HP
+MenuFrame.Parent = MainGui
 
-ControlsTab:AddToggle({
-	Name = "Change Area (Show/Hide Visual)", Default = true,
-	Callback = function(Value)
-		if _G.KotakHijau and _G.KotakMerah then
-			_G.KotakHijau.Visible = Value
-			_G.KotakMerah.Visible = Value
-		end
-	end    
-})
+-- Judul Menu
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Title.TextColor3 = Color3.fromRGB(0, 255, 0)
+Title.TextSize = 14
+Title.Font = Enum.Font.SourceSansBold
+Title.Text = " ArapBot Mobile Remake v9"
+Title.Parent = MenuFrame
 
-ControlsTab:AddDropdown({
-	Name = "Selected Bait", Default = "Basic Bait", Options = {"Basic Bait", "Rare Bait", "Legendary Bait"},
-	Callback = function(Value) _G.SelectedBait = Value end
-})
+-- Fungsi Pembantu Membuat Tombol Toggle
+local function BuatToggle(text, yPos, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(0.9, 0, 0, 35)
+    Button.Position = UDim2.new(0.05, 0, 0, yPos)
+    Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.SourceSans
+    Button.Text = text .. " : OFF"
+    Button.Parent = MenuFrame
 
-ControlsTab:AddDropdown({
-	Name = "Selected Rod", Default = "Fishing Rod", Options = {"Fishing Rod", "Advanced Rod", "Rare Rod", "Legendary Rod"},
-	Callback = function(Value) _G.SelectedRod = Value end
-})
+    local state = false
+    Button.MouseButton1Click:Connect(function()
+        state = not state
+        if state then
+            Button.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            Button.Text = text .. " : ON"
+        else
+            Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Button.Text = text .. " : OFF"
+        end
+        callback(state)
+    end)
+end
 
-local SettingsTab = Window:MakeTab({Name = "Cast & Reel Settings", Icon = "rbxassetid://4483362458", PremiumOnly = false})
+-- Fungsi Pembantu Membuat Input Box (Untuk Delay)
+local function BuatInputBox(text, yPos, defaultText, callback)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.5, 0, 0, 30)
+    Label.Position = UDim2.new(0.05, 0, 0, yPos)
+    Label.BackgroundTransparency = 1
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Text = text
+    Label.Parent = MenuFrame
 
-SettingsTab:AddSlider({
-	Name = "Cast Delay", Min = 0.5, Max = 5, Default = 1.5, Increment = 0.1, ValueName = "detik",
-	Callback = function(Value) _G.CastDelay = Value end    
-})
+    local Box = Instance.new("TextBox")
+    Box.Size = UDim2.new(0.35, 0, 0, 25)
+    Box.Position = UDim2.new(0.55, 0, 0, yPos)
+    Box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Box.TextColor3 = Color3.fromRGB(0, 255, 0)
+    Box.Text = tostring(defaultText)
+    Box.ClearTextOnFocus = false
+    Box.Parent = MenuFrame
 
-SettingsTab:AddSlider({
-	Name = "Reel Delay", Min = 0.1, Max = 3, Default = 0.4, Increment = 0.1, ValueName = "detik",
-	Callback = function(Value) _G.ReelDelay = Value end    
-})
+    Box.FocusLost:Connect(function()
+        local num = tonumber(Box.Text)
+        if num then callback(num) end
+    end)
+end
 
-SettingsTab:AddToggle({
-	Name = "Auto Buy Bait", Default = false,
-	Callback = function(Value) _G.AutoBuyBait = Value end    
-})
+-- MENYUSUN LAYOUT TOMBOL (PERSIS SUSUNAN ARAPBOT DI FOTO)
+BuatToggle("Start Autofish", 45, function(v) _G.StartAutofish = v end)
+BuatToggle("Change Area (Visual Box)", 90, function(v)
+    if _G.KotakHijau and _G.KotakMerah then
+        _G.KotakHijau.Visible = v
+        _G.KotakMerah.Visible = v
+    end
+end)
+BuatToggle("Auto Buy Bait", 135, function(v) _G.AutoBuyBait = v end)
 
-print("[BAGIAN 3 Selesai] Menu panel kontrol berhasil dimuat!")
+BuatInputBox("Cast Delay (Sec):", 180, _G.CastDelay, function(v) _G.CastDelay = v end)
+BuatInputBox("Reel Delay (Sec):", 215, _G.ReelDelay, function(v) _G.ReelDelay = v end)
+
+print("[BAGIAN 3 Sukses] Menu eksternal buatan sendiri berhasil dimuat tanpa internet!")
 -- ====================================================================
 -- BAGIAN 4: LOGIKA UTAMA MESIN OTOMATIS (CORE ENGINE & LOGIC 5s)
 -- ====================================================================
