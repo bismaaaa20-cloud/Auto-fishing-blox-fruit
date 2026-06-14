@@ -1,150 +1,192 @@
--- ====================================================================
---         DEEP SEA FISHING HUB - VERSI KECEPATAN INSTAN V3 (FIX) 🌊
--- ====================================================================
+-- [[ Blox Fruits MOBILE FIXED - MINI PANEL GUI ]] --
 
--- Fungsi Bypass Penyimpanan Lokal (Mencegah Lag & Mempercepat Loading)
-local function muatFileInstan(namaFile, urlGitHub)
-    if isfile(namaFile) then
-        return loadstring(readfile(namaFile))()
-    else
-        local sukses, isiFile = pcall(game.HttpGet, game, urlGitHub)
-        if sukses and isiFile then
-            writefile(namaFile, isiFile)
-            return loadstring(isiFile)()
-        end
-    end
-    return loadstring(game:HttpGet(urlGitHub))()
+-- Bersihkan sisa GUI lama agar tidak menumpuk di layar
+if game:GetService("CoreGui"):FindFirstChild("MiniFishingGUI") then
+    game:GetService("CoreGui").MiniFishingGUI:Destroy()
 end
 
--- 1. MEMUAT SYSTEM LOGIKA PANCING DI LATAR BELAKANG VIA LINK GITHUB KAMU
+-- Variabel Status Fitur (Default: MATI)
+_G.AutoFishing = false
+_G.InstantChest = false
+
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local ToggleUIBtn = Instance.new("TextButton") -- Tombol Buka/Tutup
+local TitleLabel = Instance.new("TextLabel")
+local FishBtn = Instance.new("TextButton")      -- Tombol Auto Fish
+local ChestBtn = Instance.new("TextButton")     -- Tombol Auto Chest
+local UICorner_Main = Instance.new("UICorner")
+local UICorner_Toggle = Instance.new("UICorner")
+local UICorner_Fish = Instance.new("UICorner")
+local UICorner_Chest = Instance.new("UICorner")
+
+ScreenGui.Name = "MiniFishingGUI"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- 1. TOMBOL BUKA / TUTUP (Diletakkan terpisah di area kosong agar mudah diklik)
+ToggleUIBtn.Name = "ToggleUIBtn"
+ToggleUIBtn.Parent = ScreenGui
+ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255) -- Warna Biru
+ToggleUIBtn.Position = UDim2.new(0.1, 0, 0.4, 0) -- Posisi kiri layar
+ToggleUIBtn.Size = UDim2.new(0, 70, 0, 30)       -- Ukuran sangat kecil
+ToggleUIBtn.Font = Enum.Font.SourceSansBold
+ToggleUIBtn.Text = "MENU"
+ToggleUIBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleUIBtn.TextSize = 14
+UICorner_Toggle.Parent = ToggleUIBtn
+
+-- 2. PANEL UTAMA KECIL (Bisa disembunyikan / dibuka tutup)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Position = UDim2.new(0.1, 0, 0.46, 0) -- Berada di bawah tombol MENU
+MainFrame.Size = UDim2.new(0, 160, 0, 110)      -- Panel dibuat sangat ringkas
+MainFrame.Visible = true -- Default: Terbuka di awal
+MainFrame.Active = true
+MainFrame.Draggable = true -- Bisa digeser jika menutupi pandangan
+UICorner_Main.Parent = MainFrame
+
+-- Judul Menu Kecil
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Size = UDim2.new(1, 0, 0, 25)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.Text = "FISHING MENU"
+TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+TitleLabel.TextSize = 12
+
+-- 3. TOMBOL FITUR 1: AUTO FISH
+FishBtn.Name = "FishBtn"
+FishBtn.Parent = MainFrame
+FishBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah (OFF)
+FishBtn.Position = UDim2.new(0.05, 0, 0.28, 0)
+FishBtn.Size = UDim2.new(0.9, 0, 0, 30)
+FishBtn.Font = Enum.Font.SourceSansBold
+FishBtn.Text = "AUTO FISH: OFF"
+FishBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+FishBtn.TextSize = 12
+UICorner_Fish.Parent = FishBtn
+
+-- 4. TOMBOL FITUR 2: AUTO CHEST
+ChestBtn.Name = "ChestBtn"
+ChestBtn.Parent = MainFrame
+ChestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah (OFF)
+ChestBtn.Position = UDim2.new(0.05, 0, 0.62, 0)
+ChestBtn.Size = UDim2.new(0.9, 0, 0, 30)
+ChestBtn.Font = Enum.Font.SourceSansBold
+ChestBtn.Text = "AUTO CHEST: OFF"
+ChestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChestBtn.TextSize = 12
+UICorner_Chest.Parent = ChestBtn
+
+
+-- =========================================================
+-- LOGIKA INTERAKSI UI (BUKA-TUTUP & ON/OFF)
+-- =========================================================
+
+-- Fungsi Buka Tutup Panel Utama (Minimize)
+ToggleUIBtn.MouseButton1Down:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    if MainFrame.Visible then
+        ToggleUIBtn.Text = "TUTUP"
+        ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    else
+        ToggleUIBtn.Text = "BUKA"
+        ToggleUIBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) -- Berubah redup saat ditutup
+    end
+end)
+
+-- Tombol On/Off Auto Fish
+FishBtn.MouseButton1Down:Connect(function()
+    _G.AutoFishing = not _G.AutoFishing
+    if _G.AutoFishing then
+        FishBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50) -- Hijau (ON)
+        FishBtn.Text = "AUTO FISH: ON"
+    else
+        FishBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah (OFF)
+        FishBtn.Text = "AUTO FISH: OFF"
+    end
+end)
+
+-- Tombol On/Off Auto Chest
+ChestBtn.MouseButton1Down:Connect(function()
+    _G.InstantChest = not _G.InstantChest
+    if _G.InstantChest then
+        ChestBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50) -- Hijau (ON)
+        ChestBtn.Text = "AUTO CHEST: ON"
+    else
+        ChestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah (OFF)
+        ChestBtn.Text = "AUTO CHEST: OFF"
+    end
+end)
+
+
+-- =========================================================
+-- JALUR BACKEND PROSES GAME (BERJALAN DI LATAR BELAKANG)
+-- =========================================================
+local Players = game:Service("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:Service("Workspace")
+local VirtualInputManager = game:Service("VirtualInputManager")
+
+-- Loop Auto Fishing
 task.spawn(function()
-    pcall(function()
-        muatFileInstan("SistemPancingLocal.lua", "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/SistemPancing.lua")
-    end)
-end)
-
--- 2. MEMUAT FRAMEWORK ANTARMUKA ASLI DARI LINK GITHUB KAMU SENDIRI
-local KavoUi = muatFileInstan("KavoLibLocal.lua", "https://raw.githubusercontent.com/bismaaaa20-cloud/Auto-fishing-blox-fruit/refs/heads/main/KavoLib.lua")
-
--- Inisialisasi Jendela Utama (Menggunakan Fungsi Asli Kavo: CreateLib)
-local JendelaUtama = KavoUi.CreateLib("DEEP SEA HUB : BLOX FRUIT")
-
--- 3. PEMBUATAN HALAMAN TAB MENU (Menghindari Bug Crash Fungsi)
-local TabPancing = JendelaUtama:NewTab("Otomatisasi")
-local SeksiUtama = TabPancing:NewSection("Kendali Utama Makro")
-local SeksiPendukung = TabPancing:NewSection("Sistem Pendukung & AFK")
-
-local TabEkonomi = JendelaUtama:NewTab("Toko & Item")
-local SeksiEkonomi = TabEkonomi:NewSection("Manajemen Umpan & Penjualan")
-
--- ==========================================
--- ISI SEKSI 1: UTAMA (MENGGUNAKAN ELEMEN KAVO)
--- ==========================================
-
--- Saklar Utama Jalannya Makro
-SeksiUtama:NewToggle("Auto Fishing (UTAMA)", "Menyalakan seluruh rangkaian sistem makro pancing", function(state)
-    getgenv().AutoFishingState = state
-end)
-
--- Pilihan Kecepatan Tarikan Senar
-SeksiUtama:NewDropdown("Mode Tangkapan", "Pilih metode penarikan pancingan", {"Perfect", "Instant"}, function(pilihan)
-    getgenv().FishingMode = pilihan
-end)
-
--- Pilihan Prioritas Target Tangkapan
-SeksiUtama:NewDropdown("Target Prioritas", "Fokus penarikan objek di dalam game", {"Chest", "Fish"}, function(pilihan)
-    getgenv().TargetType = pilihan
-end)
-
--- ==========================================
--- ISI SEKSI 2: AFK & PENDUKUNG
--- ==========================================
-
--- Saklar Otomatis Hancurkan/Buka Box
-SeksiPendukung:NewToggle("Auto Open Semua Jenis Peti", "Menghancurkan peti otomatis dari dalam tas", function(state)
-    getgenv().AutoOpenAllChests = state
-end)
-
--- Saklar Anti Deteksi Diam Roblox
-SeksiPendukung:NewToggle("Anti-AFK Protection", "Mencegah putus koneksi server (Error 203)", function(state)
-    getgenv().AntiAfkEnabled = state
-end)
-
--- Saklar Penghemat Suhu Perangkat (Baterai HP)
-SeksiPendukung:NewToggle("FPS Booster (AFK Mode)", "Mematikan rendering game agar perangkat tetap dingin", function(state)
-    getgenv().FpsBoostEnabled = state
-end)
-
--- ==========================================
--- ISI SEKSI 3: TOKO & ITEM (AUTO BUY BAIT)
--- ==========================================
-
--- Saklar Otomatis Membeli Umpan Baru
-SeksiEkonomi:NewToggle("Auto Buy Bait", "Otomatis membeli umpan di server saat jumlahnya habis (0)", function(state)
-    getgenv().AutoBuyBaitEnabled = state
-end)
-
--- Pilihan Jenis Umpan Semua Lautan (First, Second, Third Sea)
-SeksiEkonomi:NewDropdown("Pilih Jenis Umpan", "Tentukan jenis umpan yang dibeli otomatis sesuai lautan kamu", {
-    "Basic", "Kelp Bait", "Good Bait", "Frozen Bait", "Abyssal Bait", "Carnivore Bait", "Epic Bait"
-}, function(pilihan)
-    getgenv().SelectedBaitType = pilihan
-end)
-
--- Saklar Otomatis Jual Hasil Pancing ke NPC
-SeksiEkonomi:NewToggle("Auto Sell Fish", "Otomatis menjual seluruh hasil tangkapan saat tas penuh", function(state)
-    getgenv().AutoSellEnabled = state
-end)
-
--- Saklar Sembunyi Koordinat Laut Terisolasi
-SeksiEkonomi:NewToggle("Teleport Safe Zone", "Memindahkan karakter ke titik laut tersembunyi agar anti-report", function(state)
-    getgenv().SafeZoneTeleport = state
-end)
-
--- ==========================================
--- 4. FIX TOMBOL HP: MANIPULASI CORE GUI LANGSUNG
--- ==========================================
-local CoreGui = game:GetService("CoreGui")
-
-task.spawn(function()
-    task.wait(1.5) -- Menunggu seluruh elemen dasar KavoLib selesai terpasang sempurna
-    
-    local TargetGui = CoreGui:FindFirstChild("KavoDeepSeaHub")
-    if TargetGui then
-        local FramePanel = TargetGui:FindFirstChild("MainFrame")
-        
-        if FramePanel then
-            -- Pembuatan tombol melayang bulat minimalis agar mudah digunakan di HP
-            local TombolHp = Instance.new("TextButton")
-            TombolHp.Name = "MobileToggleBtn"
-            TombolHp.Size = UDim2.new(0, 60, 0, 35)
-            TombolHp.Position = UDim2.new(0, 15, 0, 130) -- Letak kiri layar agar tidak menutupi tombol serang bawaan game
-            TombolHp.BackgroundColor3 = Color3.fromRGB(28, 28, 30)
-            TombolHp.Text = "MENU"
-            TombolHp.TextColor3 = Color3.fromRGB(255, 184, 0)
-            TombolHp.Font = Enum.Font.SourceSansBold
-            TombolHp.TextSize = 12
-            TombolHp.Active = true
-            TombolHp.Draggable = true -- Pengguna HP bebas menggeser letak tombol ini sesuka hati
-            TombolHp.Parent = TargetGui
-
-            -- Desain Sudut Melengkung Halus
-            local Corner = Instance.new("UICorner")
-            Corner.CornerRadius = UDim.new(0, 8)
-            Corner.Parent = TombolHp
-            
-            -- Desain Garis Batas Menyala Kuning Emas
-            local UIStroke = Instance.new("UIStroke")
-            UIStroke.Color = Color3.fromRGB(255, 184, 0)
-            UIStroke.Thickness = 1.2
-            UIStroke.Parent = TombolHp
-
-            -- Sistem Buka Tutup Panel Utama Lewat Ketukan Tombol HP
-            TombolHp.MouseButton1Click:Connect(function()
-                FramePanel.Visible = not FramePanel.Visible
+    while true do
+        task.wait(0.5)
+        if _G.AutoFishing then
+            pcall(function()
+                local character = LocalPlayer.Character
+                local tool = character and character:FindFirstChildWhichIsA("Tool")
+                
+                if tool and (string.find(string.lower(tool.Name), "rod") or string.find(string.lower(tool.Name), "fishing")) then
+                    tool:Activate()
+                    task.wait(0.3)
+                    
+                    local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local fishGui = playerGui and (playerGui:FindFirstChild("FishingGui") or playerGui:FindFirstChild("Fishing"))
+                    if fishGui then
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                        task.wait(0.05)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                    end
+                end
             end)
         end
     end
 end)
 
-print("[Main-Hub] GUI Berbasis getgenv() Berhasil Dimuat.")
+-- Loop Auto Chest Instan
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if _G.InstantChest then
+            pcall(function()
+                for _, object in pairs(Workspace:GetChildren()) do
+                    if not _G.InstantChest then break end
+                    if object:IsA("Model") and (string.find(object.name, "Chest") or string.find(object.name, "Sunken")) then
+                        local targetPart = object:FindFirstChildWhichIsA("Part") or object:FindFirstChild("TouchInterest")
+                        if targetPart then
+                            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                root.CFrame = targetPart.CFrame
+                                task.wait(0.15)
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- Sistem Anti-AFK
+local VirtualUser = game:Service("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+end)
+
+print("Mini GUI Berhasil Dimuat!")
